@@ -78,19 +78,22 @@ const config = {
         
         const keypoints3D = hand.keypoints3D.map(keypoint => [keypoint.x, keypoint.y, keypoint.z]);
         const trustLevel = 9;
-        const est = GE.estimate(keypoints3D,trustLevel)
-        if (est.gestures.length > 0) {
+        const predictions = GE.estimate(keypoints3D,trustLevel)
+
+        if(!predictions.gestures.length){
+          updateDebugInfo(predictions.poseData, 'left');
+        }
+
+        if (predictions.gestures.length > 0) {
 
           // find gesture with highest match score
-          let result = est.gestures.reduce((p, c) => {
+          let result = predictions.gestures.reduce((p, c) => {
             return (p.score > c.score) ? p : c
           });
 
-          console.log(result);
-
           const chosenHand = hand.handedness.toLowerCase()
           resultLayer[chosenHand].innerText = gestureStrings[result.name]
-          updateDebugInfo(est.poseData, chosenHand)
+          updateDebugInfo(predictions.poseData, chosenHand)
         }
 
       }
