@@ -23,7 +23,11 @@ const gestureStrings = {
   dont: "🙅",
 };
 
-
+const base = ['Horizontal', 'Diagonal Up'];
+const dont = {
+  left: [...base].map(i => i.concat(`Right`).replaceAll(' ','')),
+  right: [...base].map(i => i.concat(`Left`).replaceAll(' ','')),
+}
 
 async function createDetector() {
   return window.handPoseDetection.createDetector(
@@ -57,6 +61,27 @@ async function main() {
   // load handpose model
   const detector = await createDetector();
   console.log("mediaPose model loaded");
+
+  const pair = new Set();
+
+  function checkGestureCombination(chosenHand, poseData){
+    const fingerDirectionIndex = 2;
+
+    const addToPairIfCorrect = (chosenHand) =>{
+      const containsHand = poseData.some(finger=>dont[chosenHand].includes(finger[fingerDirectionIndex].replaceAll(' ','')));
+
+      if (!containsHand) return;
+      pair.add(chosenHand);
+    }
+
+    addToPairIfCorrect(chosenHand);
+    if(pair.size !== 2) return;
+    resultLayer.left.innerText = resultLayer.right.innerText = gestureStrings.dont;
+
+    pair.clear();
+    /*Same value to bouth*/
+  }
+
 
   // main estimation loop
   const estimateHands = async () => {
@@ -98,16 +123,14 @@ async function main() {
 
         const chosenHand = hand.handedness.toLowerCase();
         updateDebugInfo(predictions.poseData, chosenHand);
-        const gestureIcon = gestureStrings[result.name];
+        const gestureFound = gestureStrings[result.name];
 
-        if (result.name != "dont") {
-          if (hands.length == 2) {
-            resultLayer[chosenHand].innerText = gestureIcon;
-          }
-        }else{
-            resultLayer[chosenHand].innerText = gestureIcon;
+        if(gestureFound !== gestureStrings.dont){
+          resultLayer[chosenHand].innerText = gestureFound;
+          continue;
         }
 
+        checkGestureCombination(chosenHand, predictions.poseData);
       }
     }
     // ...and so on
