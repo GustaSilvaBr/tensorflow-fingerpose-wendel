@@ -4,7 +4,15 @@ const RockGesture = new GestureDescription('rock'); // ✊️
 const PaperGesture = new GestureDescription('paper'); // 🖐
 const ScissorsGesture = new GestureDescription('scissors'); // ✌️
 
-  
+const HanglooseGesture = new GestureDescription('hangloose'); // 🤙
+// hangloose  
+HanglooseGesture.addCurl(Finger.Thumb, FingerCurl.NoCurl, 1.0);  
+HanglooseGesture.addCurl(Finger.Pinky, FingerCurl.NoCurl, 1.0);
+
+for(let finger of [Finger.Index, Finger.Middle, Finger.Ring]){
+    HanglooseGesture.addCurl(finger, FingerCurl.FullCurl, 1.0);
+}
+
 // Rock
 // -----------------------------------------------------------------------------
   
@@ -44,7 +52,7 @@ ScissorsGesture.addCurl(Finger.Ring, FingerCurl.HalfCurl, 0.9);
 ScissorsGesture.addCurl(Finger.Pinky, FingerCurl.FullCurl, 1.0);
 ScissorsGesture.addCurl(Finger.Pinky, FingerCurl.HalfCurl, 0.9);
 
-const gestures = [RockGesture, PaperGesture, ScissorsGesture];
+const gestures = [RockGesture, PaperGesture, ScissorsGesture, HanglooseGesture];
 
 export {
     gestures
