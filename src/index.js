@@ -23,6 +23,8 @@ const gestureStrings = {
   dont: "🙅",
 };
 
+
+
 async function createDetector() {
   return window.handPoseDetection.createDetector(
     window.handPoseDetection.SupportedModels.MediaPipeHands,
@@ -90,21 +92,20 @@ async function main() {
 
       if (predictions.gestures.length > 0) {
         // find gesture with highest match score
-        let result = predictions.gestures.reduce((p, c) => {
+        const result = predictions.gestures.reduce((p, c) => {
           return p.score > c.score ? p : c;
         });
 
-        if (result.name == "dont") {
+        const chosenHand = hand.handedness.toLowerCase();
+        updateDebugInfo(predictions.poseData, chosenHand);
+        const gestureIcon = gestureStrings[result.name];
+
+        if (result.name != "dont") {
           if (hands.length == 2) {
-            const chosenHand = hand.handedness.toLowerCase();
-            resultLayer[chosenHand].innerText = gestureStrings[result.name];
-            updateDebugInfo(predictions.poseData, chosenHand);
+            resultLayer[chosenHand].innerText = gestureIcon;
           }
         }else{
-          const chosenHand = hand.handedness.toLowerCase();
-            resultLayer[chosenHand].innerText = gestureStrings[result.name];
-            updateDebugInfo(predictions.poseData, chosenHand);
-          
+            resultLayer[chosenHand].innerText = gestureIcon;
         }
 
       }
