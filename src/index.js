@@ -1,3 +1,5 @@
+import {gestures} from './gestures.js'
+
 const config = {
     video: { width: 640, height: 480, fps: 30 }
   }
@@ -13,10 +15,13 @@ const config = {
 
   const gestureStrings = {
     'thumbs_up': '👍',
-    'victory': '✌🏻'
+    'victory': '✌🏻',
+    'rock':'✊️',
+    'paper':'🖐',
+    'scissors':'✌️'
   }
 
-  async function createDetector() {
+  async function  createDetector() {
     return window.handPoseDetection.createDetector(
       window.handPoseDetection.SupportedModels.MediaPipeHands,
       {
@@ -51,25 +56,27 @@ const config = {
 
     // main estimation loop
     const estimateHands = async () => {
-
       // clear canvas overlay
-      ctx.clearRect(0, 0, config.video.width, config.video.height)
-      resultLayer.right.innerText = ''
-      resultLayer.left.innerText = ''
+      ctx.clearRect(0, 0, config.video.width, config.video.height);
+      resultLayer.right.innerText = '';
+      resultLayer.left.innerText = '';
 
       // get hand landmarks from video
       const hands = await detector.estimateHands(video, {
         flipHorizontal: true
       })
-
+      //hands -> object with the finger coordinates
+      // const keyPoints3D = 
       for (const hand of hands) {
         for (const keypoint of hand.keypoints) {
           const name = keypoint.name.split('_')[0].toString().toLowerCase()
           const color = landmarkColors[name]
           drawPoint(ctx, keypoint.x, keypoint.y, 3, color)
         }
+        
+        const keypoints3D = hand.keypoints3D.map(keypoint => [keypoint.x, keypoint.y, keypoint.z]);
 
-        const est = GE.estimate(hand.keypoints3D, 9)
+        const est = GE.estimate(keypoints3D, 9)
         if (est.gestures.length > 0) {
 
           // find gesture with highest match score
@@ -85,9 +92,9 @@ const config = {
       // ...and so on
       setTimeout(() => { estimateHands() }, 1000 / config.video.fps)
     }
-
-    estimateHands()
-    console.log("Starting predictions")
+    console.log("Starting predictions");
+    estimateHands();
+    
   }
 
   async function initCamera(width, height, fps) {
@@ -107,8 +114,8 @@ const config = {
     video.height = height
 
     // get video stream
-    const stream = await navigator.mediaDevices.getUserMedia(constraints)
-    video.srcObject = stream
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
 
     return new Promise(resolve => {
       video.onloadedmetadata = () => { resolve(video) }
