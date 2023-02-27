@@ -23,11 +23,11 @@ const gestureStrings = {
   dont: "🙅",
 };
 
-const base = ['Horizontal', 'Diagonal Up'];
+const base = ["Horizontal", "Diagonal Up"];
 const dont = {
-  left: [...base].map(i => i.concat(`Right`).replaceAll(' ','')),
-  right: [...base].map(i => i.concat(`Left`).replaceAll(' ','')),
-}
+  left: [...base].map((i) => i.concat(`Right`).replaceAll(" ", "")),
+  right: [...base].map((i) => i.concat(`Left`).replaceAll(" ", "")),
+};
 
 async function createDetector() {
   return window.handPoseDetection.createDetector(
@@ -64,24 +64,28 @@ async function main() {
 
   const pair = new Set();
 
-  function checkGestureCombination(chosenHand, poseData){
+  function checkGestureCombination(chosenHand, poseData) {
     const fingerDirectionIndex = 2;
 
-    const addToPairIfCorrect = (chosenHand) =>{
-      const containsHand = poseData.some(finger=>dont[chosenHand].includes(finger[fingerDirectionIndex].replaceAll(' ','')));
+    const addToPairIfCorrect = (chosenHand) => {
+      const containsHand = poseData.some((finger) =>
+        dont[chosenHand].includes(
+          finger[fingerDirectionIndex].replaceAll(" ", "")
+        )
+      );
 
       if (!containsHand) return;
       pair.add(chosenHand);
-    }
+    };
 
     addToPairIfCorrect(chosenHand);
-    if(pair.size !== 2) return;
-    resultLayer.left.innerText = resultLayer.right.innerText = gestureStrings.dont;
+    if (pair.size !== 2) return;
+    resultLayer.left.innerText = resultLayer.right.innerText =
+      gestureStrings.dont;
 
     pair.clear();
     /*Same value to bouth*/
   }
-
 
   // main estimation loop
   const estimateHands = async () => {
@@ -120,16 +124,19 @@ async function main() {
         const result = predictions.gestures.reduce((p, c) => {
           return p.score > c.score ? p : c;
         });
-
         const chosenHand = hand.handedness.toLowerCase();
         updateDebugInfo(predictions.poseData, chosenHand);
         const gestureFound = gestureStrings[result.name];
 
-        if(gestureFound !== gestureStrings.dont){
-          resultLayer[chosenHand].innerText = gestureFound;
-          continue;
-        }
+        // if(gestureFound !== gestureStrings.dont){
+        //   resultLayer[chosenHand].innerText = gestureFound;
+        //   continue;
+        // }
 
+        const wristKeyPoint3D = hand.keypoints3D.filter(
+          (keypoint) => (keypoint.name = "wrist")
+        )[0];
+        lookingForDragMovement(wristKeyPoint3D, gestureFound);
         checkGestureCombination(chosenHand, predictions.poseData);
       }
     }
@@ -201,3 +208,51 @@ window.addEventListener("DOMContentLoaded", () => {
   canvas.height = config.video.height;
   console.log("Canvas initialized");
 });
+
+let gesturesLocations = [];
+function lookingForDragMovement(wristKeyPoints3D, gesture) {
+  const lastGestureLocation =
+    gesturesLocations.length > 0
+      ? gesturesLocations[gesturesLocations.length - 1]
+      : undefined;
+
+  gesturesLocations = [];
+
+  const newGestureLocation = {
+    gesture,
+    y: Number.parseInt(wristKeyPoints3D.y * 1000000),
+    x: Number.parseInt(wristKeyPoints3D.x * 1000000),
+  };
+
+  if (lastGestureLocation && (newGestureLocation.gesture == lastGestureLocation.gesture)) {
+    const differenceBetweenYLocations =
+      lastGestureLocation.y - newGestureLocation.y;
+
+    const necessaryDifference = 1200;
+
+    if ((differenceBetweenYLocations * -1) / (necessaryDifference * -1)> (1.2* -1 )) {
+      console.log("last: ", lastGestureLocation.y, "new", newGestureLocation.y);
+      console.log(differenceBetweenYLocations);
+
+      if (differenceBetweenYLocations > necessaryDifference) {
+        moveVideo(-20);
+      } else if (differenceBetweenYLocations < -necessaryDifference) {
+        moveVideo(20);
+      }
+    }
+
+  }
+
+  if(newGestureLocation.gesture == gestureStrings.paper) gesturesLocations.push(newGestureLocation);
+}
+
+function moveVideo(additionalPosition){
+  console.log('addPosition: ', additionalPosition);
+
+
+  const video = document.getElementById("video-container");
+  const newTopPosition =  video.offsetTop + additionalPosition;
+  console.log('newTopPosition: ', newTopPosition);
+  video.style.top = newTopPosition+"px";
+
+}

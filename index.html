@@ -43,6 +43,10 @@
       display: flex;
     }
 
+    .video{
+      position: relative;
+    }
+
     .video,
     .debug {
       padding: 0 20px;
@@ -62,7 +66,8 @@
     #video-container {
       width: 640px;
       height: 480px;
-      position: relative;
+      position: absolute;
+      transition: 0.2s;
     }
 
     .layer {
